@@ -41,7 +41,6 @@ When a feedable is deleted, one of three things happen:
 
 If the feedable is not being aggregated, there are two options:
 * We simply delete all related feeds to avoid problems that would occur because feed permissions are proxies of the destroyed object.
-OR 
 * If the +keep_feeds_when_destroyed+ flag is set, we can add a destruction feed and inherit permissions from the feed's scoping object instead.
 
 === Assumptions
