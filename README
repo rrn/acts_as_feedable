@@ -1,52 +1,51 @@
-# This +acts_as+ extension allows objects to create feeds which describe them. 
-# These feeds can then be used in a "Facebook-style" News Feed.
-#
-#
-# example:
-#
-# class ItemUserTag < ActiveRecord::Base
-#   acts_as_feedable :feed_name => 'Tag'
-# end
-#
-# Feeds are created using the _with_feed wrappers around the save methods.
-#
-# example:
-# 
-# annotation = Annotation.new
-# annotation.save_with_feed(current_user)
-#
-# OR
-#
-# annotation = annotation.find(params[:id])
-# annotation.update_attributes_with_feed(params[:annotation])
-#
-# === Delegated Feeds
-#
-# Sometimes a object that is created isn't the focus of the feed that represents it's creation. A
-# good example is a membership. When a membership is created we don't care about the membership itself
-# but about the user. When a membership is destroyed, we still want to reference the user in the feed about its creation.
-# This is solved by using the :delegate option to instead create a 'joined' feed with a User feedable in place of a 'created'
-# feed with a Membership feedable.
-#
-# === Aggregate Feeds
-#
-# Some things happen too frequently to list every occurance. Adding 50 items to a project shouldn't generate 50 feeds.
-# Passing :aggregate => true will instead create a single feed per person per day which counts the number of feedables created, updated, and destroyed.
-# Each feedable creation will also generate an aggregated_component, a link to the object which is aggregated into the feed. This allows feeds
-# to show each individual object which was added or destroyed upon request.
-#
-# === Deleting a Feedable
-#
-# When a feedable is deleted, one of three things happen: 
-# => If the feedable is being aggregated, we can add an aggregated component which represents the destruction of the feedable.
-#
-# => If the feedable is not being aggregated, there are two options:
-# => We simply delete all related feeds to avoid problems that would occur because feed permissions are proxies of the destroyed object.
-#    OR 
-# => If the +keep_feeds_when_destroyed+ flag is set, we can add a destruction feed and inherit permissions from the feed's scoping object instead.
-#
-# === Assumptions
-#
-# * The acts_as_permissable plugin is being used by the application.
-# * Feedables being aggregated all have the same permissions.
-# * Feedables being aggregated are all public or permissable_proxies of the object they reference
+This +acts_as+ extension allows objects to create feeds which describe them. 
+These feeds can then be used in a "Facebook-style" News Feed.
+
+example:
+
+class ItemUserTag < ActiveRecord::Base
+  acts_as_feedable :feed_name => 'Tag'
+end
+
+Feeds are created using the _with_feed wrappers around the save methods.
+
+example:
+
+annotation = Annotation.new
+annotation.save_with_feed(current_user)
+
+OR
+
+annotation = annotation.find(params[:id])
+annotation.update_attributes_with_feed(params[:annotation])
+
+=== Delegated Feeds
+
+Sometimes a object that is created isn't the focus of the feed that represents it's creation. A
+good example is a membership. When a membership is created we don't care about the membership itself
+but about the user. When a membership is destroyed, we still want to reference the user in the feed about its creation.
+This is solved by using the :delegate option to instead create a 'joined' feed with a User feedable in place of a 'created'
+feed with a Membership feedable.
+
+=== Aggregate Feeds
+
+Some things happen too frequently to list every occurance. Adding 50 items to a project shouldn't generate 50 feeds.
+Passing :aggregate => true will instead create a single feed per person per day which counts the number of feedables created, updated, and destroyed.
+Each feedable creation will also generate an aggregated_component, a link to the object which is aggregated into the feed. This allows feeds
+to show each individual object which was added or destroyed upon request.
+
+=== Deleting a Feedable
+
+When a feedable is deleted, one of three things happen: 
+=> If the feedable is being aggregated, we can add an aggregated component which represents the destruction of the feedable.
+
+=> If the feedable is not being aggregated, there are two options:
+=> We simply delete all related feeds to avoid problems that would occur because feed permissions are proxies of the destroyed object.
+   OR 
+=> If the +keep_feeds_when_destroyed+ flag is set, we can add a destruction feed and inherit permissions from the feed's scoping object instead.
+
+=== Assumptions
+
+* The acts_as_permissable plugin is being used by the application.
+* Feedables being aggregated all have the same permissions.
+* Feedables being aggregated are all public or permissable_proxies of the object they reference
