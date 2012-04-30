@@ -3,21 +3,21 @@ These feeds can then be used in a "Facebook-style" News Feed.
 
 example:
 
-class ItemUserTag < ActiveRecord::Base
-  acts_as_feedable :feed_name => 'Tag'
-end
+  class ItemUserTag < ActiveRecord::Base
+    acts_as_feedable :feed_name => 'Tag'
+  end
 
 Feeds are created using the _with_feed wrappers around the save methods.
 
 example:
 
-annotation = Annotation.new
-annotation.save_with_feed(current_user)
+  annotation = Annotation.new
+  annotation.save_with_feed(current_user)
 
 OR
 
-annotation = annotation.find(params[:id])
-annotation.update_attributes_with_feed(params[:annotation])
+  annotation = annotation.find(params[:id])
+  annotation.update_attributes_with_feed(params[:annotation])
 
 === Delegated Feeds
 
@@ -37,12 +37,12 @@ to show each individual object which was added or destroyed upon request.
 === Deleting a Feedable
 
 When a feedable is deleted, one of three things happen: 
-=> If the feedable is being aggregated, we can add an aggregated component which represents the destruction of the feedable.
+* If the feedable is being aggregated, we can add an aggregated component which represents the destruction of the feedable.
 
-=> If the feedable is not being aggregated, there are two options:
-=> We simply delete all related feeds to avoid problems that would occur because feed permissions are proxies of the destroyed object.
-   OR 
-=> If the +keep_feeds_when_destroyed+ flag is set, we can add a destruction feed and inherit permissions from the feed's scoping object instead.
+If the feedable is not being aggregated, there are two options:
+* We simply delete all related feeds to avoid problems that would occur because feed permissions are proxies of the destroyed object.
+OR 
+* If the +keep_feeds_when_destroyed+ flag is set, we can add a destruction feed and inherit permissions from the feed's scoping object instead.
 
 === Assumptions
 
