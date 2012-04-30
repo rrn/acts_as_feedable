@@ -8,5 +8,5 @@ Gem::Specification.new do |s|
   s.description = 'Allows objects to create feeds which describe them. These feeds can then be used in a "Facebook-style" News Feed.'
   s.authors = ['Ryan Wallace', 'Nicholas Jakobsen']
   s.require_path = "lib"
-  s.files = Dir.glob("{app,lib}/**/*") + %w(LICENSE README.rdoc)
+  s.files = Dir.glob("{app,lib}/**/*") + %w(README.rdoc)
 end

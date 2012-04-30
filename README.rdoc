@@ -19,7 +19,7 @@ OR
   annotation = annotation.find(params[:id])
   annotation.update_attributes_with_feed(params[:annotation])
 
-=== Delegated Feeds
+== Delegated Feeds
 
 Sometimes a object that is created isn't the focus of the feed that represents it's creation. A
 good example is a membership. When a membership is created we don't care about the membership itself
@@ -27,14 +27,14 @@ but about the user. When a membership is destroyed, we still want to reference t
 This is solved by using the :delegate option to instead create a 'joined' feed with a User feedable in place of a 'created'
 feed with a Membership feedable.
 
-=== Aggregate Feeds
+== Aggregate Feeds
 
 Some things happen too frequently to list every occurance. Adding 50 items to a project shouldn't generate 50 feeds.
 Passing :aggregate => true will instead create a single feed per person per day which counts the number of feedables created, updated, and destroyed.
 Each feedable creation will also generate an aggregated_component, a link to the object which is aggregated into the feed. This allows feeds
 to show each individual object which was added or destroyed upon request.
 
-=== Deleting a Feedable
+== Deleting a Feedable
 
 When a feedable is deleted, one of three things happen: 
 * If the feedable is being aggregated, we can add an aggregated component which represents the destruction of the feedable.
@@ -43,8 +43,14 @@ If the feedable is not being aggregated, there are two options:
 * We simply delete all related feeds to avoid problems that would occur because feed permissions are proxies of the destroyed object.
 * If the +keep_feeds_when_destroyed+ flag is set, we can add a destruction feed and inherit permissions from the feed's scoping object instead.
 
-=== Assumptions
+== Assumptions
 
 * The acts_as_permissable plugin is being used by the application.
 * Feedables being aggregated all have the same permissions.
 * Feedables being aggregated are all public or permissable_proxies of the object they reference
+
+== License
+
+ActsAsFeeable is released under the MIT license:
+
+* http://www.opensource.org/licenses/MIT
