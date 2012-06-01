@@ -7,7 +7,7 @@ class Feed < ActiveRecord::Base
   has_many :feed_aggregated_components, :dependent => :destroy, :order => 'feed_aggregated_components.updated_at DESC'
   
   # When the feedable has been deleted, inherit permissions from the scoping_object instead
-  acts_as_joinable_component :parent => 'permission_inheritance_target', :polymorphic => true, :view_permission => lambda {|feed| feed.feedable.acts_like?(:joinable) ? :find : :view }
+  acts_as_joinable_component :parent => 'permission_inheritance_target', :polymorphic => true, :view_permission => lambda {|feed| :find if feed.feedable.acts_like?(:joinable) }
   
   default_scope order('feeds.updated_at DESC')
 
