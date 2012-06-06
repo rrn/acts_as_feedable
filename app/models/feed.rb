@@ -6,9 +6,6 @@ class Feed < ActiveRecord::Base
   
   has_many :feed_aggregated_components, :dependent => :destroy, :order => 'feed_aggregated_components.updated_at DESC'
   
-  # When the feedable has been deleted, inherit permissions from the scoping_object instead
-  acts_as_joinable_component :parent => 'permission_inheritance_target', :polymorphic => true, :view_permission => lambda {|feed| :find if feed.feedable.acts_like?(:joinable) }
-  
   default_scope order('feeds.updated_at DESC')
 
   # Filter feeds about public joinables that you haven't joined, unless the feed is actually about you
@@ -18,9 +15,12 @@ class Feed < ActiveRecord::Base
            (feeds.feedable_type = 'User' AND feeds.feedable_id = #{user.id}) OR
            EXISTS (SELECT * FROM memberships WHERE memberships.joinable_type = '#{joinable_type}' AND memberships.joinable_id = feeds.scoping_object_id AND memberships.user_id = ?)", user.id)
   }
+
+  acts_as_joinable_component :parent => 'permission_inheritance_target', :polymorphic => true, :view_permission => lambda {|feed| :find if feed.feedable.acts_like?(:joinable) }
   
-  # The feed may have been delegated so inherit permissions from scoping_object
-  # eg. a user (non-permissible) leaves a project, the permission to view the feed rests with the project because the feedable is the user itself
+  # The scoping_object becomes the parent if the feed is delegated to a non-permissable or the feedable is deleted
+  # eg. a user (non-permissible) leaves a project, the parent of the feed is the project since a user isn't a permissable
+  # eg. a writeboard is destroyed, the parent of the feed is now the project
   def permission_inheritance_target_type
     if feedable.acts_like?(:permissable)
       feedable_type
