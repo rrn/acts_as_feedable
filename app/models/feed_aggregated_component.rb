@@ -14,6 +14,10 @@ class FeedAggregatedComponent < ActiveRecord::Base
   def self.updated_today(feed, reference, secondary_reference = nil)
     time_scope('updated', Date.today, feed, reference, secondary_reference)
   end
+
+  def self.destroyed_today(feed, reference, secondary_reference = nil)
+    time_scope('destroyed', Date.today, feed, reference, secondary_reference)
+  end
   
   def self.time_scope(action, time, feed, reference, secondary_reference)
     scope = where(:action => action, :feed_id => feed.id, :reference_type => reference.class.to_s, :reference_id => reference.id)

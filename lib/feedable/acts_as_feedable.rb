@@ -267,40 +267,53 @@ module Feedable #:nodoc:
         feed = find_existing_aggregate_feed || create_aggregate_feed
       
         if direction.eql?(:added)
-          feed.increment!(:added_count)
-          create_component(feed, 'created')
+          aggregated_component_addition(feed)
         elsif direction.eql?(:updated)
-          # Only add an 'updated' FeedAggregatedComponent if a matching FeedAggregatedComponent wasn't created lately or updated today.
-          unless FeedAggregatedComponent.created_recently(feed, component_reference, component_secondary_reference) || FeedAggregatedComponent.updated_today(feed, component_reference, component_secondary_reference)
-            feed.increment!(:updated_count)
-            create_component(feed, 'updated')
-          end
+          aggregated_component_update(feed)
         else
-          aggregate_feed_removal(feed)
+          aggregated_component_removal(feed)
         end
       end
 
-      # Process the removal of an aggregate feedable
-      def aggregate_feed_removal(feed)
-        # If the aggregate feedable was created today, just remove the created
+      def aggregated_component_addition(feed)
+        # If the aggregated component was already removed today, just remove the destroyed
+        # components to zero out the feed.
+        #
+        # Else add a created FeedAggregatedComponent instead
+        if remove_todays_destroyed_feed(feed, component_reference)
+          # Get rid of the feed completely if there are no more FeedAggregatedComponents
+          feed.destroy if feed.added_count == 0 && feed.updated_count == 0 && feed.removed_count == 0
+        else          
+          feed.increment!(:added_count)
+          create_component(feed, 'created')
+        end
+      end
+
+      def aggregated_component_update(feed)
+        # Only add an 'updated' FeedAggregatedComponent if a matching FeedAggregatedComponent wasn't created lately or updated today.
+        unless FeedAggregatedComponent.created_recently(feed, component_reference, component_secondary_reference) || FeedAggregatedComponent.updated_today(feed, component_reference, component_secondary_reference)
+          feed.increment!(:updated_count)
+          create_component(feed, 'updated')
+        end
+      end
+
+      def aggregated_component_removal(feed)
+        # If the aggregated component was already created today, just remove the created
         # and updated components to zero out the feed.
         #
         # Else get rid of any updated FeedAggregatedComponents from today and add a destroyed
         # FeedAggregatedComponent instead
+        remove_todays_updated_feed(feed, component_reference)
         if remove_todays_created_feed(feed, component_reference)
-          remove_todays_updated_feed(feed, component_reference)
-
           # Get rid of the feed completely if there are no more FeedAggregatedComponents
           feed.destroy if feed.added_count == 0 && feed.updated_count == 0 && feed.removed_count == 0
         else
-          remove_todays_updated_feed(feed, component_reference)
-          
           feed.increment!(:removed_count)
           create_component(feed, 'destroyed')
         end
       end
 
-      # Remove a 'created' FeedAggregatedComponents that was created today for the provided
+      # Remove a 'created' FeedAggregatedComponent that was created today for the provided
       # *component_reference* and return true if it was removed
       def remove_todays_created_feed(feed, component_reference)
         if feedable_aggregated_component = FeedAggregatedComponent.created_today(feed, component_reference, component_secondary_reference)
@@ -311,11 +324,22 @@ module Feedable #:nodoc:
         end
       end
 
-      # Remove an 'updated' FeedAggregatedComponents that was created today for the provided
+      # Remove an 'updated' FeedAggregatedComponent that was created today for the provided
       # *component_reference* and return true if it was removed
       def remove_todays_updated_feed(feed, component_reference)
         if feedable_aggregated_component = FeedAggregatedComponent.updated_today(feed, component_reference, component_secondary_reference)
           feed.decrement!(:updated_count)
+          feedable_aggregated_component.destroy
+
+          return true
+        end
+      end
+
+      # Remove a 'destroyed' FeedAggregatedComponent that was created today for the provided
+      # *component_reference* and return true if it was removed
+      def remove_todays_destroyed_feed(feed, component_reference)
+        if feedable_aggregated_component = FeedAggregatedComponent.destroyed_today(feed, component_reference, component_secondary_reference)
+          feed.decrement!(:removed_count)
           feedable_aggregated_component.destroy
 
           return true
