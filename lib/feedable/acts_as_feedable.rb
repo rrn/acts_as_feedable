@@ -3,7 +3,6 @@ module Feedable #:nodoc:
     module ActMethod
       # Configuration options are:
       #
-      # * +keep_feeds_when_destroyed+ - specifies whether to keep the feeds when a feedable is destroyed. This should only be done if the feedable is public or is scoped to another feedable.
       # * +target_name+ - specifies how to get the name of the target (used by the view to store the name of the primary object the feed links to). (default is nil)
       # * +scoping_object?+ - Boolean - If true, this object will become the scoping object for all feedables descending from it. eg. a Project is a scoping object for all discussions, comments, and writeboards within the project.
       # * +parent+ - Specifies the code to execute to traverse up the feedable chain in search of any scoping objects
@@ -26,9 +25,7 @@ module Feedable #:nodoc:
         include InstanceMethods unless included_modules.include?(InstanceMethods)
         
         # Sanity Check
-        options.assert_valid_keys(:scoping_object?, :parent, :keep_feeds_when_destroyed, :target_name, :delegate, :aggregate)
-        
-        raise 'target_name option must be set if the keep_feeds_when_destroyed option is used' if options.key?(:keep_feeds_when_destroyed) && !options.key?(:target_name)
+        options.assert_valid_keys(:scoping_object?, :parent, :target_name, :delegate, :aggregate)
         
         options[:delegate].assert_valid_keys(:actions, :references) if options[:delegate].present?
         raise 'actions option must be set if the delegate option is used' if options[:delegate].is_a?(Hash) && options[:delegate][:actions].blank?
@@ -38,15 +35,11 @@ module Feedable #:nodoc:
         raise 'action option must be set if the aggregate option is used' if options[:aggregate].is_a?(Hash) && options[:aggregate][:action].blank?
         raise 'references option must be set if the aggregate option is used' if options[:aggregate].is_a?(Hash) && options[:aggregate][:references].blank?
         
-        options.reverse_merge!(:keep_feeds_when_destroyed => false, :delegate => {}, :aggregate => {})
+        options.reverse_merge!(:delegate => {}, :aggregate => {})
         
         self.feed_options = options
         
         class_eval <<-EOV
-        
-          def keep_feeds_when_destroyed?
-            #{options[:keep_feeds_when_destroyed]}
-          end
           
           def feedable
             if delegating?
@@ -93,8 +86,8 @@ module Feedable #:nodoc:
       def self.extended(base)
         base.after_create :add_created_feed
         base.after_update :add_updated_feed
-        base.before_destroy :setup_destroyed_feed_if_keeping_feeds
-        base.after_destroy :add_destroyed_feed, :destroy_scoped_feeds
+        base.before_destroy :add_destroyed_feed
+        base.after_destroy :destroy_scoped_feeds
         
         base.cattr_accessor :feed_options
         base.has_many :feeds, :as => :feedable
@@ -226,22 +219,21 @@ module Feedable #:nodoc:
       
       # Creates a feed about the deletion of the feedable. 
       # If the feed isn't aggregated then it deletes all existing feeds related to that object.
+      #
+      # Note: Create the destroyed feed before the feedable is destroyed so it gets the correct permission mappings
       def add_destroyed_feed                  
         if aggregating?
           update_aggregate_feed(:removed) if feed_initiator_id
         elsif delegating?
           create_feed_with_defaults(:action => delegate_action_for('destroyed')) if feed_initiator_id
-        elsif !keep_feeds_when_destroyed?
+        elsif feed_initiator_id
+          raise 'target_name option must be set when destroying with feed' unless self.class.feed_options.key?(:target_name)
+          create_feed_with_defaults(:action => 'destroyed')
+        else
           Feed.destroy_all(:feedable_type => self.class.to_s, :feedable_id => id)
         end
+
         clear_initiator
-      end
-      
-      # Create the destroyed feed before the feedable is destroyed so it gets the correct permission mappings
-      def setup_destroyed_feed_if_keeping_feeds
-        if keep_feeds_when_destroyed? && feed_initiator_id  
-          create_feed_with_defaults(:action => 'destroyed')
-        end
       end
       
       # Destroy all feeds which are scoped to the feedable.
