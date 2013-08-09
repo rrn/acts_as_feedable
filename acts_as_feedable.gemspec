@@ -1,7 +1,7 @@
 Gem::Specification.new do |s|
   s.name = 'acts_as_feedable'
-  s.version = '1.0.0'
-  s.date = %q{2012-04-30}
+  s.version = '1.1.0'
+  s.date = %q{2013-08-09}
   s.email = 'technical@rrnpilot.org'
   s.homepage = 'http://github.com/rrn/acts_as_feedable'
   s.summary = 'Allows objects to create feeds which describe them'
@@ -9,4 +9,6 @@ Gem::Specification.new do |s|
   s.authors = ['Ryan Wallace', 'Nicholas Jakobsen']
   s.require_path = "lib"
   s.files = Dir.glob("{app,lib}/**/*") + %w(README.rdoc)
+
+  s.add_dependency('rails', '~> 4.0')
 end

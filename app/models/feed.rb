@@ -4,9 +4,9 @@ class Feed < ActiveRecord::Base
   belongs_to :feedable, :polymorphic => true
   belongs_to :scoping_object, :polymorphic => true
   
-  has_many :feed_aggregated_components, :dependent => :destroy, :order => 'feed_aggregated_components.updated_at DESC'
+  has_many :feed_aggregated_components, lambda { order 'feed_aggregated_components.updated_at DESC' }, :dependent => :destroy
   
-  default_scope order('feeds.updated_at DESC')
+  default_scope lambda { order('feeds.updated_at DESC') }
 
   # Used to group feeds by the day they occurred
   def date
