@@ -25,11 +25,11 @@ module JoinableExtensions
 
   def self.extend_membership
     Membership.class_eval do
+      before_destroy :ensure_feed_creation
+
       acts_as_feedable :parent => 'joinable', :delegate => {:references => 'user', :actions => {:created => 'joined', :destroyed => 'left'}}
 
       private
-
-      before_destroy :ensure_feed_creation
 
       def ensure_feed_creation
         with_feed(initiator) if initiator.present?
@@ -39,6 +39,9 @@ module JoinableExtensions
 
   def self.extend_membership_invitation
     MembershipInvitation.class_eval do
+      before_create :ensure_feed_creation
+      before_destroy :ensure_feed_creation
+
       acts_as_feedable :parent => 'joinable', :delegate => {:references => 'user', :actions => {:created => 'invited', :destroyed => 'cancelled_invite'}}
 
       attr_accessor :no_default_feed
@@ -54,9 +57,6 @@ module JoinableExtensions
         self.no_default_feed = true # Default feed has incorrect initiator. We're about to create a feed with the correct initiator.
         destroy_with_feed(user)
       end
-
-      before_create :ensure_feed_creation
-      before_destroy :ensure_feed_creation
 
       # Don't create a destroyed feed if the user is accepting a membership invitation or a membership request exists for this User.
       # In that case, a membership was created, and this invitation should be 'invisible' to the Users and the UI. Thus no feeds should be created.
