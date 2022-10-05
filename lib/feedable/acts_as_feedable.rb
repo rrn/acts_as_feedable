@@ -230,7 +230,7 @@ module Feedable #:nodoc:
           raise 'target_name option must be set when destroying with feed' unless self.class.feed_options.key?(:target_name)
           create_feed_with_defaults(:action => 'destroyed')
         else
-          Feed.destroy_all(:feedable_type => self.class.to_s, :feedable_id => id)
+          Feed.where(:feedable_type => self.class.to_s, :feedable_id => id).destroy_all
         end
 
         clear_initiator
@@ -240,7 +240,7 @@ module Feedable #:nodoc:
       # This will prevent feeds from not rendering because the feedable has been destroyed.
       def destroy_scoped_feeds
         unless aggregating?
-          Feed.destroy_all(:scoping_object_type => self.class.to_s, :scoping_object_id => id)
+          Feed.where(:scoping_object_type => self.class.to_s, :scoping_object_id => id).destroy_all
         end
       end
       
